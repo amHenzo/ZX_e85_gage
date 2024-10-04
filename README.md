@@ -2,3 +2,11 @@
 making a gage to fill the clock space with data about the car the goal is to monitor e85 ratio and lambda values
 
 ![car_normal](https://github.com/user-attachments/assets/05fe3068-f3a3-481f-b862-ac29cf06604b)
+
+# using  
+  - esp32 ( 38 pins )
+  - adxl345
+  - lcd 128x64
+  - temp sensor and humidity
+  - lambda from aliexpress
+  - 
