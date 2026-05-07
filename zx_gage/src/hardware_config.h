@@ -12,6 +12,7 @@ constexpr uint8_t PIN_ADXL_CS = 16;
 constexpr uint8_t PIN_DHT = 17;
 constexpr uint8_t PIN_ONBOARD_LED = 2;
 
-constexpr uint32_t LCD_SPI_CLOCK_HZ = 800000;
+constexpr uint32_t LCD_SPI_CLOCK_HZ = 900000;
+constexpr bool LCD_SPI_CLOCK_TEST = false;
 
 #endif
