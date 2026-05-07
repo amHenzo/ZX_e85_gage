@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <SPI.h>
+#include <math.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "app_state.h"
@@ -13,6 +14,35 @@ namespace {
 U8G2_ST7920_128X64_F_HW_SPI u8g2(U8G2_R0, PIN_LCD_CS, PIN_LCD_RESET);
 unsigned long fpsWindowStart = 0;
 uint16_t frames = 0;
+
+float clampG(float value)
+{
+  if (value < -1.0f) {
+    return -1.0f;
+  }
+  if (value > 1.0f) {
+    return 1.0f;
+  }
+  return value;
+}
+
+void printGValue(const char *label, float value)
+{
+  u8g2.print(label);
+  u8g2.print(value, 2);
+  u8g2.print("G");
+}
+
+void printCompactGValue(const char *label, float value)
+{
+  u8g2.print(label);
+  u8g2.print(value, 2);
+}
+
+void printCompactGNumber(float value)
+{
+  u8g2.print(value, 2);
+}
 
 void displayTask(void *)
 {
@@ -46,35 +76,50 @@ void displayRenderDashboard()
     SpiBusLock lock;
     u8g2.clearBuffer();
     u8g2.setFont(u8g2_font_profont10_mf);
-    u8g2.setCursor(0, 7);
-    u8g2.print("Frame Test");
-    u8g2.setCursor(55, 7);
-    u8g2.print(frames);
+    const float lateralG = -snapshot.accelXG;
+    const float frontRearG = -snapshot.accelYG;
+    const float leftG = lateralG < 0.0f ? -lateralG : 0.0f;
+    const float rightG = lateralG > 0.0f ? lateralG : 0.0f;
+    const float frontG = frontRearG > 0.0f ? frontRearG : 0.0f;
+    const float rearG = frontRearG < 0.0f ? -frontRearG : 0.0f;
 
-    u8g2.setCursor(0, 15);
-    u8g2.print(snapshot.fps, 1);
-    u8g2.setCursor(19, 15);
-    u8g2.print(" FPS");
-
-    u8g2.setCursor(0, 23);
-    u8g2.print(snapshot.humidityPct, 1);
-    u8g2.setCursor(25, 23);
-    u8g2.print("\xF7""H");
-
-    u8g2.setCursor(0, 31);
+    u8g2.setFont(u8g2_font_profont10_mf);
+    u8g2.setCursor(0, 8);
     u8g2.print(snapshot.temperatureC, 1);
-    u8g2.setCursor(25, 31);
-    u8g2.print("\xB0""C");
+    u8g2.print("C");
+    u8g2.setCursor(0, 18);
+    u8g2.print(snapshot.humidityPct, 1);
+    u8g2.print("%H");
+    u8g2.setCursor(0, 28);
+    u8g2.print(snapshot.fps, 1);
+    u8g2.print("FPS");
 
-    u8g2.setCursor(75, 7);
+    u8g2.setFont(u8g2_font_profont10_mf);
+    u8g2.setCursor(74, 8);
     u8g2.print(snapshot.dateText);
 
-    u8g2.setFont(u8g2_font_profont15_mf);
-    u8g2.setCursor(2, 50);
-    u8g2.print(snapshot.timeText);
-
     const uint8_t sprite = snapshot.spriteIndex < bitmap_allArray_LEN ? snapshot.spriteIndex : 2;
-    u8g2.drawXBM(70, 10, 20, 64, bitmap_allArray[sprite]);
+    u8g2.drawXBM(62, 6, 20, 64, bitmap_allArray[sprite]);
+
+    const int gaugeCx = 72;
+    const int gaugeCy = 36;
+    const int dotX = gaugeCx + lroundf(clampG(lateralG) * 8.0f);
+    const int dotY = gaugeCy - lroundf(clampG(frontRearG) * 18.0f);
+    u8g2.drawDisc(dotX, dotY, 2);
+
+    u8g2.setFont(u8g2_font_4x6_mf);
+    u8g2.setCursor(64, 18);
+    printCompactGNumber(frontG);
+    u8g2.setCursor(42, 39);
+    printCompactGNumber(leftG);
+    u8g2.setCursor(88, 39);
+    printCompactGNumber(rightG);
+    u8g2.setCursor(78, 62);
+    printCompactGNumber(rearG);
+
+    u8g2.setFont(u8g2_font_profont15_mf);
+    u8g2.setCursor(0, 62);
+    u8g2.print(snapshot.timeText);
     u8g2.sendBuffer();
   }
 

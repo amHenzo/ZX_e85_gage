@@ -91,13 +91,16 @@ void appStateSetTime(const char *timeText, const char *dateText, bool configured
   }
 }
 
-void appStateSetSensorData(float temperatureC, float humidityPct, float pitch, float roll, uint8_t spriteIndex)
+void appStateSetSensorData(float temperatureC, float humidityPct, float accelXG, float accelYG, float accelZG, float pitch, float roll, uint8_t spriteIndex)
 {
   if (stateMutex != nullptr) {
     xSemaphoreTake(stateMutex, portMAX_DELAY);
   }
   state.temperatureC = temperatureC;
   state.humidityPct = humidityPct;
+  state.accelXG = accelXG;
+  state.accelYG = accelYG;
+  state.accelZG = accelZG;
   state.pitch = pitch;
   state.roll = roll;
   state.spriteIndex = spriteIndex;

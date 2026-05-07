@@ -8,6 +8,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "app_state.h"
+#include "generated_web_assets.h"
 #include "time_service.h"
 
 namespace {
@@ -15,45 +16,8 @@ constexpr char AP_SSID[] = "ZX-Gage-Setup";
 constexpr uint16_t DNS_PORT = 53;
 
 AsyncWebServer server(80);
+AsyncEventSource events("/events");
 DNSServer dnsServer;
-
-const char INDEX_HTML[] PROGMEM = R"HTML(
-<!doctype html>
-<html>
-<head>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ZX Gage Setup</title>
-  <style>
-    body{font-family:system-ui,Arial,sans-serif;margin:24px;background:#101214;color:#f5f5f5}
-    main{max-width:420px;margin:auto}
-    label{display:block;margin:12px 0 4px}
-    input,button{box-sizing:border-box;width:100%;font-size:18px;padding:10px;border-radius:6px;border:1px solid #555}
-    button{margin-top:18px;background:#f5f5f5;color:#101214;font-weight:700}
-    .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-  </style>
-</head>
-<body>
-<main>
-  <h1>ZX Gage Time</h1>
-  <form method="post" action="/time">
-    <label>Date</label>
-    <div class="row">
-      <input name="year" type="number" min="2020" max="2099" placeholder="YYYY" required>
-      <input name="month" type="number" min="1" max="12" placeholder="MM" required>
-      <input name="day" type="number" min="1" max="31" placeholder="DD" required>
-    </div>
-    <label>Time</label>
-    <div class="row">
-      <input name="hour" type="number" min="0" max="23" placeholder="HH" required>
-      <input name="minute" type="number" min="0" max="59" placeholder="MM" required>
-      <input name="second" type="number" min="0" max="59" placeholder="SS" value="0" required>
-    </div>
-    <button type="submit">Set DS3231 Time</button>
-  </form>
-</main>
-</body>
-</html>
-)HTML";
 
 bool readPostTime(AsyncWebServerRequest *request, ManualTime &time)
 {
@@ -75,7 +39,7 @@ bool readPostTime(AsyncWebServerRequest *request, ManualTime &time)
 
 void sendPortalPage(AsyncWebServerRequest *request)
 {
-  request->send_P(200, "text/html", INDEX_HTML);
+  request->send_P(200, "text/html", WEB_INDEX_HTML);
 }
 
 void dnsTask(void *)
@@ -83,6 +47,22 @@ void dnsTask(void *)
   for (;;) {
     dnsServer.processNextRequest();
     vTaskDelay(pdMS_TO_TICKS(10));
+  }
+}
+
+void streamTask(void *)
+{
+  for (;;) {
+    ZxGaugeState snapshot;
+    appStateGet(snapshot);
+
+    char payload[128];
+    snprintf(payload, sizeof(payload),
+             "{\"x\":%.3f,\"y\":%.3f,\"z\":%.3f,\"temp\":%.2f,\"hum\":%.2f,\"fps\":%.2f}",
+             snapshot.accelXG, snapshot.accelYG, snapshot.accelZG, snapshot.temperatureC,
+             snapshot.humidityPct, snapshot.fps);
+    events.send(payload, "state", millis());
+    vTaskDelay(pdMS_TO_TICKS(100));
   }
 }
 }
@@ -94,6 +74,12 @@ void webPortalStart()
   dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
 
   server.on("/", HTTP_GET, sendPortalPage);
+  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send_P(200, "text/css", WEB_STYLE_CSS);
+  });
+  server.on("/app.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send_P(200, "application/javascript", WEB_APP_JS);
+  });
   server.on("/generate_204", HTTP_GET, sendPortalPage);
   server.on("/gen_204", HTTP_GET, sendPortalPage);
   server.on("/hotspot-detect.html", HTTP_GET, sendPortalPage);
@@ -104,6 +90,7 @@ void webPortalStart()
   server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->redirect("/");
   });
+  server.addHandler(&events);
 
   server.on("/time", HTTP_POST, [](AsyncWebServerRequest *request) {
     ManualTime manualTime;
@@ -121,5 +108,6 @@ void webPortalStart()
 
   server.begin();
   xTaskCreatePinnedToCore(dnsTask, "portal-dns", 2048, nullptr, 1, nullptr, 0);
+  xTaskCreatePinnedToCore(streamTask, "portal-events", 4096, nullptr, 1, nullptr, 0);
   appStateSetPortalReady(true);
 }

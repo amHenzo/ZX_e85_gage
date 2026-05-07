@@ -8,6 +8,9 @@ struct ZxGaugeState {
   char dateText[11];
   float temperatureC;
   float humidityPct;
+  float accelXG;
+  float accelYG;
+  float accelZG;
   float pitch;
   float roll;
   uint8_t spriteIndex;
@@ -24,6 +27,6 @@ void appStateSetFps(float fps);
 void appStateSetBootComplete(bool complete);
 void appStateSetPortalReady(bool ready);
 void appStateSetTime(const char *timeText, const char *dateText, bool configured);
-void appStateSetSensorData(float temperatureC, float humidityPct, float pitch, float roll, uint8_t spriteIndex);
+void appStateSetSensorData(float temperatureC, float humidityPct, float accelXG, float accelYG, float accelZG, float pitch, float roll, uint8_t spriteIndex);
 
 #endif

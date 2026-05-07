@@ -14,9 +14,10 @@ constexpr uint8_t DHT_TYPE = DHT11;
 constexpr uint8_t REG_POWER_CTL = 0x2D;
 constexpr uint8_t REG_DATA_FORMAT = 0x31;
 constexpr uint8_t REG_DATAX0 = 0x32;
+constexpr float ADXL_G_PER_LSB = 0.0078f;
 
 DHT dht(PIN_DHT, DHT_TYPE);
-SensorSample sample = {0.0f, 0.0f, 0.0f, 0.0f, 2};
+SensorSample sample = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2};
 float rawRoll = 0.0f;
 float rawPitch = 0.0f;
 unsigned long lastDhtRead = 0;
@@ -55,7 +56,7 @@ void sensorTask(void *)
 
     const unsigned long now = millis();
     if (now - lastRtcPush >= 100) {
-      appStateSetSensorData(sample.temperatureC, sample.humidityPct, sample.pitch, sample.roll, sample.spriteIndex);
+      appStateSetSensorData(sample.temperatureC, sample.humidityPct, sample.accelXG, sample.accelYG, sample.accelZG, sample.pitch, sample.roll, sample.spriteIndex);
       lastRtcPush = now;
     }
 
@@ -82,6 +83,10 @@ void sensorsUpdateFast()
   const int16_t x = ((int16_t)values[1] << 8) | values[0];
   const int16_t y = ((int16_t)values[3] << 8) | values[2];
   const int16_t z = ((int16_t)values[5] << 8) | values[4];
+
+  sample.accelXG = x * ADXL_G_PER_LSB;
+  sample.accelYG = y * ADXL_G_PER_LSB;
+  sample.accelZG = z * ADXL_G_PER_LSB;
 
   rawRoll = atan2f((float)y, sqrtf(((float)x * x) + ((float)z * z))) * 180.0f / PI;
   rawPitch = atan2f((float)-x, sqrtf(((float)y * y) + ((float)z * z))) * 180.0f / PI;

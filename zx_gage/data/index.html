@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ZX Gage</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>ZX Gage</h1>
+    <span id="status" class="status">connecting</span>
+  </header>
+
+  <section class="grid">
+    <div class="panel">
+      <div class="g-force">
+        <div class="g-card front"><span class="label">Front</span><span id="frontG" class="number">0.00</span><span class="unit">G</span></div>
+        <div class="g-row">
+          <div class="g-card left"><span class="label">Left</span><span id="leftG" class="number">0.00</span><span class="unit">G</span></div>
+          <canvas id="gauge" width="180" height="180"></canvas>
+          <div class="g-card right"><span class="label">Right</span><span id="rightG" class="number">0.00</span><span class="unit">G</span></div>
+        </div>
+        <div class="g-card rear"><span class="label">Rear</span><span id="rearG" class="number">0.00</span><span class="unit">G</span></div>
+      </div>
+      <div class="meta">
+        <span>Z <b id="zG">0.00</b> G</span>
+        <span>Temp <b id="temp">0.0</b> C</span>
+        <span>Humidity <b id="hum">0.0</b> %</span>
+        <span>FPS <b id="fps">0.0</b></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <form method="post" action="/time">
+        <label>Date</label>
+        <div class="row">
+          <input name="year" type="number" min="2020" max="2099" placeholder="YYYY" required>
+          <input name="month" type="number" min="1" max="12" placeholder="MM" required>
+          <input name="day" type="number" min="1" max="31" placeholder="DD" required>
+        </div>
+        <label>Time</label>
+        <div class="row">
+          <input name="hour" type="number" min="0" max="23" placeholder="HH" required>
+          <input name="minute" type="number" min="0" max="59" placeholder="MM" required>
+          <input name="second" type="number" min="0" max="59" placeholder="SS" value="0" required>
+        </div>
+        <button type="submit">Set DS3231 Time</button>
+      </form>
+    </div>
+
+    <div class="panel span">
+      <canvas id="graph" width="720" height="220"></canvas>
+      <button id="download" type="button">Download CSV Log</button>
+    </div>
+  </section>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>

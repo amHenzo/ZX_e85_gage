@@ -6,6 +6,9 @@
 struct SensorSample {
   float temperatureC;
   float humidityPct;
+  float accelXG;
+  float accelYG;
+  float accelZG;
   float pitch;
   float roll;
   uint8_t spriteIndex;
