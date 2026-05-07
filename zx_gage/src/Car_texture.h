@@ -78,7 +78,7 @@ const unsigned char bitmap_car_braking [] PROGMEM = {
 
 // Array of all bitmaps for convenience. (Total bytes used to store images in PROGMEM = 1040)
 const int bitmap_allArray_LEN = 5;
-const unsigned char* bitmap_allArray[5] = {
+const unsigned char* const bitmap_allArray[5] = {
 	bitmap_car_braking,
 	bitmap_car_left,
 	bitmap_car_normal,

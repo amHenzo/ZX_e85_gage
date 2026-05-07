@@ -1,5 +1,8 @@
 #include "read_adxl.h"
 
+ok first make a plan i need to separate the code into direfferent files then i need a code that make a loading screen with the car_texture.h turning on itself with a bar charging below use only math to turn the car so it dosen't use memory and then land one the loop i created who display things perdiocally 
+then open a wifi with a portal who isresponsible to set the time and pass data with struct and use the two cores so one is used to only display things so we get the max fps possible 
+
 
 /* ------------ adxl345 ----------------------*/
 //Assign the Chip Select signal to pin 16
